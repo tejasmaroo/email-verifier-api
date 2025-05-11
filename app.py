@@ -171,3 +171,6 @@ if __name__ == "__main__":
         debug=debug_mode,
         ssl_context=ssl_context
     )
+
+# Make sure the app is directly accessible at the module level
+# This helps Gunicorn find it with the 'app:app' import pattern
