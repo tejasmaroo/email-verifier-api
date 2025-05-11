@@ -90,26 +90,19 @@ def verify_email():
             result['message'] = 'Invalid email format'
             return jsonify(result)
         
-        # Check MX records and deliverability with shorter timeout
-        try:
-            mx_check = validate_email(email, check_format=False, check_blacklist=False, 
-                                    check_dns=True, check_smtp=False, dns_timeout=5)
-            result['has_mx_records'] = bool(mx_check)
-            
-            if not mx_check:
-                result['message'] = 'Domain does not have valid MX records'
-                return jsonify(result)
-        except Exception as dns_error:
-            logger.warning(f"DNS check failed for {email}: {str(dns_error)}")
-            result['message'] = f'DNS verification failed: {str(dns_error)}'
-            result['has_mx_records'] = False
+        # Check MX records and deliverability
+        mx_check = validate_email(email, check_format=False, check_blacklist=False, 
+                                 check_dns=True, check_smtp=False)
+        result['has_mx_records'] = bool(mx_check)
+        
+        if not mx_check:
+            result['message'] = 'Domain does not have valid MX records'
             return jsonify(result)
         
-        # Check SMTP with better error handling and shorter timeout
+        # Check SMTP with better error handling and timeout
         try:
-            # Use a much shorter timeout to prevent worker timeouts
             smtp_check = validate_email(email, check_format=False, check_blacklist=False, 
-                                      check_dns=False, check_smtp=True, smtp_timeout=5, 
+                                      check_dns=False, check_smtp=True, smtp_timeout=10, 
                                       smtp_helo_host='my.host.name', smtp_from_address='verify@example.com')
             result['is_deliverable'] = bool(smtp_check)
             
@@ -152,4 +145,3 @@ def health_check():
         'timestamp': time.strftime('%Y-%m-%d %H:%M:%S')
     })
 
-# No if __name__ == '__main__' block here as this is now an importable module
